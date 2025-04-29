@@ -51,11 +51,13 @@ class LlmPollingBot(
     private val adminHelper = AdminHelper(this, adminUserId, usersRepository)
     private val roleDetector = RoleDetector(RoleConfig.allRoles)
     private val callbackHelper = CallbackHelper(this)
-    val historyManager = HistoryManager(
-        botConfig = botConfig,
-        histRepository = SQLChatHistRepository(Database.database),
-        usersRepository = usersRepository,
-    )
+    val historyManager by lazy {
+        HistoryManager(
+            botConfig = botConfig,
+            histRepository = SQLChatHistRepository(Database.database),
+            usersRepository = usersRepository,
+        )
+    }
 
     private val rootScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val rateLimits = ConcurrentHashMap<String, Long>()
