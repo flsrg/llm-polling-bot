@@ -26,8 +26,6 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-java-time:0.60.0")
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")
 
-    implementation(project(":llm-polling-client"))
-
     testImplementation(kotlin("test"))
 }
 

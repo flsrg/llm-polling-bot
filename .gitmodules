@@ -1,3 +1,0 @@
-[submodule "libs/llm-polling-client"]
-	path = libs/llm-polling-client
-	url = https://github.com/flsrg/llm-polling-client
