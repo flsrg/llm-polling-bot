@@ -5,7 +5,7 @@ import dev.flsrg.bot.db.Database
 import dev.flsrg.bot.db.HistMessage
 import dev.flsrg.bot.repo.ChatHistRepository
 import dev.flsrg.bot.repo.UserRepository
-import dev.flsrg.llmpollingclient.model.ChatMessage
+import dev.flsrg.client.model.ChatMessage
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap

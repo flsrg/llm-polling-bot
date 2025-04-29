@@ -6,7 +6,7 @@ import dev.flsrg.bot.roleplay.LanguageDetector
 import dev.flsrg.bot.uitls.BotUtils.botMessage
 import dev.flsrg.bot.uitls.BotUtils.editMessage
 import dev.flsrg.bot.uitls.BotUtils.withRetry
-import dev.flsrg.llmpollingclient.model.ChatResponse
+import dev.flsrg.client.model.ChatResponse
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessages
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException
 

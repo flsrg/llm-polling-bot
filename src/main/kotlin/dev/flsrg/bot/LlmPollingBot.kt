@@ -20,10 +20,10 @@ import dev.flsrg.bot.uitls.BotUtils.withRetry
 import dev.flsrg.bot.uitls.CallbackHelper
 import dev.flsrg.bot.uitls.MessageHelper
 import dev.flsrg.bot.uitls.MessageProcessor
-import dev.flsrg.llmpollingclient.client.Client
-import dev.flsrg.llmpollingclient.client.OpenRouterConfig
-import dev.flsrg.llmpollingclient.model.ChatMessage
-import dev.flsrg.llmpollingclient.model.ChatResponse
+import dev.flsrg.client.client.Client
+import dev.flsrg.client.client.OpenRouterConfig
+import dev.flsrg.client.model.ChatMessage
+import dev.flsrg.client.model.ChatResponse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -207,8 +207,8 @@ class LlmPollingBot(
             throw BotUtils.ExceptionEmptyResponse()
         }
 
-        if (finalAssistantMessage != null) {
-            historyManager.addMessage(userId, finalAssistantMessage!!)
+        finalAssistantMessage?.let { 
+            historyManager.addMessage(userId, it)
         }
     }
 
