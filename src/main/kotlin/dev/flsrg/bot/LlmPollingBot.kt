@@ -105,7 +105,7 @@ class LlmPollingBot(
 
         val userId = update.message.from.id
         val chatId = update.message.chat.id.toString()
-        val userName = update.message.from.userName
+        val userName = update.message.from.userName ?: "id: $userId"
         val userMessage = update.message.text
         val lang = LanguageDetector.detectLanguage(userMessage)
         lastUsedLanguage[chatId] = lang
@@ -127,7 +127,7 @@ class LlmPollingBot(
                 botHandler = this@LlmPollingBot,
                 chatId = chatId,
             )
-            log.info("Responding (${if (isThinking) "R1" else "V3"}) to ${update.message.from.userName}")
+            log.info("Responding (${if (isThinking) "R1" else "V3"}) to $userName")
 
             try {
                 withRetry(origin = "job askDeepseekR1") {
@@ -146,7 +146,7 @@ class LlmPollingBot(
 
             } finally {
                 chatJobs.remove(chatId)
-                log.info("Responding to ${update.message.from.userName} completed " +
+                log.info("Responding to $userName completed " +
                         "(${System.currentTimeMillis() - startMillis}ms)")
             }
         }
