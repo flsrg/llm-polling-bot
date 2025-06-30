@@ -1,16 +1,10 @@
 package dev.flsrg.bot.roleplay
 
-import dev.flsrg.bot.uitls.MessageHelper
-
 object LanguageDetector {
     enum class Language { EN, RU }
 
-    private val enWords = mutableSetOf("the", "and", "for", "you", "are", "hello").also {
-        it.addAll(MessageHelper.EN_THINKING_PREFIX)
-    }
-    private val ruWords = mutableSetOf("и", "в", "не", "на", "что", "привет").also {
-        it.addAll(MessageHelper.RU_THINKING_PREFIX)
-    }
+    private val enWords = mutableSetOf("the", "and", "for", "you", "are", "hello", "think")
+    private val ruWords = mutableSetOf("и", "в", "не", "на", "что", "привет", "думай", "подумай")
 
     fun detectLanguage(text: String): Language {
         if (text.isBlank()) return Language.EN // Default

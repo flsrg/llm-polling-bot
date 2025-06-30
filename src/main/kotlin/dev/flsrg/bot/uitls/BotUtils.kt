@@ -1,7 +1,7 @@
 package dev.flsrg.bot.uitls
 
-import dev.flsrg.bot.LlmPollingBot
 import dev.flsrg.bot.BotConfig
+import dev.flsrg.bot.LlmPollingBot
 import dev.flsrg.bot.roleplay.LanguageDetector
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay

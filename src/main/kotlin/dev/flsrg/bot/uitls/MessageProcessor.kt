@@ -134,7 +134,6 @@ class MessageProcessor(
         keyboardButtons: List<BotUtils.KeyboardButton> = emptyList(),
     ): Int? {
         if (message.isEmpty()) return existingMessageId
-        if (message.length == prevMessage?.length) return existingMessageId
 
         val messageId = withRetry(maxRetries = 5, initialDelay = 5000, origin = "execute updateOrSendMessage") {
             if (existingMessageId == null) {
@@ -148,6 +147,7 @@ class MessageProcessor(
                 return@withRetry botHandler.onExecute(newMessage).messageId
 
             } else {
+                if (message == prevMessage) return@withRetry existingMessageId
                 val editMessage = editMessage(
                     chatId = chatId,
                     messageId = existingMessageId,
@@ -165,7 +165,7 @@ class MessageProcessor(
         return messageId
     }
 
-    fun deleteAllReasoningMessages() {
+    private fun deleteAllReasoningMessages() {
         reasoningMessageIds.mapNotNull { it }.takeIf { it.isNotEmpty() }?.let { ids ->
             botHandler.onExecute(
                 DeleteMessages.builder()
@@ -174,13 +174,6 @@ class MessageProcessor(
                     .build()
             )
         }
-    }
-
-    fun clear() {
-        reasoningBuffer.clear()
-        contentBuffer.clear()
-        contentMessageId = null
-        reasoningMessageIds.clear()
     }
 
     fun getFinalAssistantMessage(): String = finalAssistantMessage.toString()
