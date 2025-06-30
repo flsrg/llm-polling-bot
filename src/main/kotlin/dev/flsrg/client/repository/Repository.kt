@@ -8,6 +8,7 @@ interface Repository {
     fun <T> getCompletionsStream(
         config: ClientConfig,
         model: Model,
+        temperature: Double,
         chatMessages: List<String>,
         transform: (String) -> T,
     ): Flow<T>

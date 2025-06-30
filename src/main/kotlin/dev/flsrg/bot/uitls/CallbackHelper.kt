@@ -11,6 +11,7 @@ class CallbackHelper(private val llmPollingBot: LlmPollingBot) {
     companion object {
         const val CALLBACK_DATA_FORCE_STOP = "FORCESTOP"
         const val CALLBACK_DATA_CLEAR_HISTORY = "CLEARHISTORY"
+        const val CALLBACK_DATA_REGENERATE = "REGENERATE"
     }
     
     fun handleCallbackQuery(update: Update, language: LanguageDetector.Language) {
@@ -26,6 +27,9 @@ class CallbackHelper(private val llmPollingBot: LlmPollingBot) {
             CALLBACK_DATA_CLEAR_HISTORY -> {
                 forceStop(chatId, callbackId, language)
                 clearHistory(userId, chatId, callbackId, language)
+            }
+            CALLBACK_DATA_REGENERATE -> {
+
             }
         }
     }

@@ -16,7 +16,7 @@ dependencies {
     implementation("org.telegram:telegrambots:6.9.7.1")
 
     implementation("org.slf4j:slf4j-api:2.0.7")
-    implementation("ch.qos.logback:logback-classic:1.5.6")
+    implementation("ch.qos.logback:logback-classic:1.5.13")
     implementation("org.codehaus.janino:janino:3.1.12")
 
     implementation("io.ktor:ktor-client-core:$ktorVersion")

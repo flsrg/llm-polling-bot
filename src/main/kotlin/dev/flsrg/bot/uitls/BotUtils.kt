@@ -61,6 +61,10 @@ object BotUtils {
         Strings.KeyboardClearHistoryText.get(language),
         CallbackHelper.CALLBACK_DATA_CLEAR_HISTORY
     )
+    class KeyboardButtonRegenerate(language: LanguageDetector.Language): KeyboardButton(
+        Strings.KeyboardRegenerate.get(language),
+        CallbackHelper.CALLBACK_DATA_REGENERATE
+    )
 
     private fun createInlineKeyboardMarkup(buttons: List<KeyboardButton>): InlineKeyboardMarkup {
         return InlineKeyboardMarkup.builder()

@@ -15,7 +15,8 @@ data class ChatRequest(
     @SerialName("chain_of_thought")
     val chainOfThought: Boolean = false,
     val messages: List<ChatMessage>,
-    val stream: Boolean = true
+    val stream: Boolean = true,
+    val temperature: Double = 1.0,
 )
 
 @Serializable

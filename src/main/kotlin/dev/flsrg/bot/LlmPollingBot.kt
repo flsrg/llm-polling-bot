@@ -3,27 +3,22 @@ package dev.flsrg.bot
 import dev.flsrg.bot.db.Database
 import dev.flsrg.bot.hist.HistoryManager
 import dev.flsrg.bot.repo.SQLChatHistRepository
-import dev.flsrg.bot.uitls.MessageHelper.Companion.isStartMessage
-import dev.flsrg.bot.uitls.MessageHelper.Companion.isThinkingMessage
 import dev.flsrg.bot.repo.SQLUsersRepository
 import dev.flsrg.bot.roleplay.LanguageDetector
 import dev.flsrg.bot.roleplay.LanguageDetector.Language.RU
 import dev.flsrg.bot.roleplay.RoleConfig
 import dev.flsrg.bot.roleplay.RoleDetector
-import dev.flsrg.bot.uitls.AdminHelper
-import dev.flsrg.bot.uitls.BotUtils
+import dev.flsrg.bot.uitls.*
 import dev.flsrg.bot.uitls.BotUtils.KeyboardButtonClearHistory
 import dev.flsrg.bot.uitls.BotUtils.KeyboardButtonStop
 import dev.flsrg.bot.uitls.BotUtils.botMessage
 import dev.flsrg.bot.uitls.BotUtils.sendTypingAction
 import dev.flsrg.bot.uitls.BotUtils.withRetry
-import dev.flsrg.bot.uitls.CallbackHelper
-import dev.flsrg.bot.uitls.MessageHelper
-import dev.flsrg.bot.uitls.MessageProcessor
+import dev.flsrg.bot.uitls.MessageHelper.Companion.isStartMessage
+import dev.flsrg.bot.uitls.MessageHelper.Companion.isThinkingMessage
 import dev.flsrg.client.client.Client
 import dev.flsrg.client.client.OpenRouterConfig
 import dev.flsrg.client.model.ChatMessage
-import dev.flsrg.client.model.ChatResponse
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -46,7 +41,6 @@ class LlmPollingBot(
 ) : TelegramLongPollingBot(botToken), BotHandler {
     private val log: Logger = LoggerFactory.getLogger(javaClass)
 
-    private val messageHelper = MessageHelper(this)
     private val usersRepository = SQLUsersRepository()
     private val adminHelper = AdminHelper(this, adminUserId, usersRepository)
     private val roleDetector = RoleDetector(RoleConfig.allRoles)
@@ -87,7 +81,7 @@ class LlmPollingBot(
 
                 when {
                     adminHelper.isAdminCommand(update) -> adminHelper.handleAdminCommand(update)
-                    isStartMessage(message) -> messageHelper.sendStartMessage(chatId, RU)
+                    isStartMessage(message) -> MessageHelper.sendStartMessage(this@LlmPollingBot, chatId, RU)
                     else -> handleMessage(isThinkingMessage(message), update)
                 }
             } else if (update.hasCallbackQuery()) {
@@ -111,7 +105,7 @@ class LlmPollingBot(
         lastUsedLanguage[chatId] = lang
 
         if (startMillis - rateLimits.getOrDefault(chatId, 0) < botConfig.messageRateLimit) {
-            messageHelper.sendRateLimitMessage(chatId, lang)
+            MessageHelper.sendRateLimitMessage(this, chatId, lang)
             return
         }
         rateLimits[chatId] = startMillis
@@ -120,7 +114,12 @@ class LlmPollingBot(
 
         val newJob = rootScope.launch {
             sendTypingAction(chatId)
-            messageHelper.sendRespondingMessage(chatId, isThinking, lang)
+            val messageHelper = MessageHelper(this@LlmPollingBot, chatId)
+            if (isThinking) {
+                messageHelper.sendThinkingMessage(lang)
+            } else {
+                messageHelper.sendProcessingMessage(lang)
+            }
 
             val messageProcessor = MessageProcessor(
                 botConfig = botConfig,
@@ -135,7 +134,7 @@ class LlmPollingBot(
                     messageProcessor.clear()
                     adminHelper.updateUserMessage(userId, userName)
 
-                    askDeepseek(userId, chatId, isThinking, userMessage, messageProcessor, lang)
+                    askDeepseek(userId, chatId, isThinking, messageHelper, userMessage, messageProcessor, lang)
                     adminHelper.updateUserMessage(userId, userName)
                 }
             } catch (e: Exception) {
@@ -158,14 +157,15 @@ class LlmPollingBot(
         userId: Long,
         chatId: String,
         isThinking: Boolean,
+        messageHelper: MessageHelper,
         userMessage: String,
         messageProcessor: MessageProcessor,
         language: LanguageDetector.Language,
     ) {
-        val model = if (isThinking) OpenRouterConfig.DEEPSEEK_R1 else OpenRouterConfig.DEEPSEEK_V3
+        val model = if (isThinking) OpenRouterConfig.DEEPSEEK_R1_0528 else OpenRouterConfig.DEEPSEEK_V3_0324
         var finalAssistantMessage: ChatMessage? = null
         val role = roleDetector.detectRole(userMessage, language)
-        log.info("Role detected: ${role.roleName} for $language")
+        log.info("Role detected: ${role.roleName} (${role.temperature}) for $language")
 
         historyManager.addMessage(userId, ChatMessage(role = "user", content = userMessage))
         val messages = historyManager.getHistory(userId)
@@ -178,32 +178,46 @@ class LlmPollingBot(
             ChatMessage(role = "system", content = it)
         }
 
+        var isFirstMessage = true
+
         client.askChat(
             model = model,
             messages = messages,
+            temperature = role.temperature,
             systemMessage = systemMessage,
-        ).onEach { message ->
-            if (!messageIsEmpty(message)) messageHelper.cleanupRespondingMessageButtons(chatId)
-            messageProcessor.processMessage(message)
-        }
-        .sample(botConfig.messageSamplingDuration)
-        .onCompletion { exception ->
-            if (exception != null) throw exception
+        )
+            .onEach { message ->
+                if (isFirstMessage) {
+                    if (isThinking) {
+                        messageHelper.cleanupThinkingMessage()
+                    } else {
+                        messageHelper.deleteProcessingMessage()
+                    }
+                    isFirstMessage = false
+                }
+                messageProcessor.processMessage(message)
+            }
+            .sample(botConfig.messageSamplingDuration)
+            .onCompletion { exception ->
+                if (exception != null) throw exception
 
-            messageProcessor.updateOrSend(KeyboardButtonClearHistory(language), language = language)
-            finalAssistantMessage = ChatMessage(
-                role = "assistant" ,
-                content = messageProcessor.getFinalAssistantMessage()
-            )
-        }
-        .collect {
-            sendTypingAction(chatId)
-            messageProcessor.updateOrSend(
-                KeyboardButtonStop(language),
-                KeyboardButtonClearHistory(language),
-                language = language,
-            )
-        }
+                messageProcessor.updateOrSend(
+                    KeyboardButtonClearHistory(language),
+                    language = language
+                )
+                finalAssistantMessage = ChatMessage(
+                    role = "assistant" ,
+                    content = messageProcessor.getFinalAssistantMessage()
+                )
+            }
+            .collect {
+                sendTypingAction(chatId)
+                messageProcessor.updateOrSend(
+                    KeyboardButtonStop(language),
+                    KeyboardButtonClearHistory(language),
+                    language = language,
+                )
+            }
 
         if (finalAssistantMessage?.content?.isEmpty() != false) {
             throw BotUtils.ExceptionEmptyResponse()
@@ -212,10 +226,5 @@ class LlmPollingBot(
         finalAssistantMessage?.let { 
             historyManager.addMessage(userId, it)
         }
-    }
-
-    private fun messageIsEmpty(message: ChatResponse): Boolean {
-        return message.choices.firstOrNull()?.delta?.reasoning?.isEmpty() != false
-                && message.choices.firstOrNull()?.delta?.content?.isEmpty() != false
     }
 }

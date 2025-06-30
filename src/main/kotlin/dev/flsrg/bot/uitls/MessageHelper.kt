@@ -5,10 +5,10 @@ import dev.flsrg.bot.roleplay.LanguageDetector
 import dev.flsrg.bot.uitls.BotUtils.botMessage
 import dev.flsrg.bot.uitls.BotUtils.decapitalizeFirstChar
 import dev.flsrg.bot.uitls.BotUtils.editMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessages
 import org.telegram.telegrambots.meta.api.objects.Message
-import java.util.concurrent.ConcurrentHashMap
 
-class MessageHelper(private val llmPollingBot: LlmPollingBot) {
+class MessageHelper(private val llmPollingBot: LlmPollingBot, private val chatId: String) {
     companion object {
         private const val START_DEFAULT_COMMAND = "/start"
 
@@ -32,20 +32,47 @@ class MessageHelper(private val llmPollingBot: LlmPollingBot) {
                 )
             }
         }
-    }
 
-    private val messages = ConcurrentHashMap<String, Pair<Int, String>>()
-
-    fun sendStartMessage(chatId: String, language: LanguageDetector.Language) = llmPollingBot.apply {
-        onExecute(botMessage(chatId, Strings.StartMessage.get(language)))
-    }
-
-    fun sendRespondingMessage(chatId: String, isThinking: Boolean, language: LanguageDetector.Language) = llmPollingBot.apply {
-        val message = if(isThinking) {
-            Strings.ThinkingMessage.get(language)
-        } else {
-            Strings.ResponseMessage.get(language)
+        fun sendStartMessage(bot: LlmPollingBot, chatId: String, language: LanguageDetector.Language) = apply {
+            bot.onExecute(botMessage(chatId, Strings.StartMessage.get(language)))
         }
+
+        fun sendRateLimitMessage(bot: LlmPollingBot, chatId: String, language: LanguageDetector.Language) = apply {
+            bot.onExecute(
+                botMessage(
+                    chatId = chatId,
+                    message = Strings.RateLimitMessage.get(language)
+                )
+            )
+        }
+    }
+
+    private lateinit var thinkingMessage: Pair<Int, String>
+    private var processingMessageId: Int? = null
+
+    fun sendProcessingMessage(language: LanguageDetector.Language) = llmPollingBot.apply {
+        val message = Strings.ProcessingMessage.get(language)
+        val messageId = onExecute(
+            botMessage(
+                chatId = chatId,
+                message = message,
+            )
+        ).messageId
+
+        processingMessageId = messageId
+    }
+
+    fun deleteProcessingMessage() = llmPollingBot.apply {
+        onExecute(
+            DeleteMessages.builder()
+                .chatId(chatId)
+                .messageId(processingMessageId!!)
+                .build()
+        )
+    }
+
+    fun sendThinkingMessage(language: LanguageDetector.Language) = llmPollingBot.apply {
+        val message = Strings.ThinkingMessage.get(language)
 
         val messageId = onExecute(
             botMessage(
@@ -55,29 +82,16 @@ class MessageHelper(private val llmPollingBot: LlmPollingBot) {
             )
         ).messageId
 
-        messages[chatId] = messageId to message
+        thinkingMessage = messageId to message
     }
 
-    fun cleanupRespondingMessageButtons(chatId: String) = llmPollingBot.apply {
-        if (messages.containsKey(chatId)) {
-            val message = messages[chatId]!!
-            onExecute(
-                editMessage(
-                    chatId = chatId,
-                    messageId = message.first,
-                    message = message.second,
-                    buttons = null
-                )
-            )
-            messages.remove(chatId)
-        }
-    }
-
-    fun sendRateLimitMessage(chatId: String, language: LanguageDetector.Language) = llmPollingBot.apply {
+    fun cleanupThinkingMessage() = llmPollingBot.apply {
         onExecute(
-            botMessage(
+            editMessage(
                 chatId = chatId,
-                message = Strings.RateLimitMessage.get(language)
+                messageId = thinkingMessage.first,
+                message = thinkingMessage.second,
+                buttons = null
             )
         )
     }

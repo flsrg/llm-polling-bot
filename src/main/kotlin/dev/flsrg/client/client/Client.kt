@@ -11,6 +11,7 @@ abstract class Client(
 ) {
     abstract fun askChat(
         model: Model,
+        temperature: Double,
         messages: List<ChatMessage>,
         systemMessage: ChatMessage? = null,
     ): Flow<ChatResponse>

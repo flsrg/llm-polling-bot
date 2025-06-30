@@ -13,12 +13,13 @@ import org.slf4j.LoggerFactory
 class OpenRouterApi(clientConfig: ClientConfig, apiConfig: ApiConfig): Api(clientConfig, apiConfig) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    override fun getCompletionsStream(model: Model, messagesJson: List<String>) = flow {
+    override fun getCompletionsStream(model: Model, temperature: Double, messagesJson: List<String>) = flow {
         val requestPayload = ChatRequest(
             model = model.id,
             chainOfThought = model.reasoning,
             stream = true,
-            messages = getMessages(messagesJson)
+            messages = getMessages(messagesJson),
+            temperature = temperature,
         )
 
         val messagesCount = getMessagesCount(requestPayload.messages)

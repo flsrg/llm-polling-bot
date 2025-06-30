@@ -6,7 +6,8 @@ data class RoleConfig(
     val keywords: Set<String> = setOf(),
     val russianKeywords: Set<String> = setOf(),
     val russianSystemMessage: String? = null,
-    val priority: Int = 1
+    val temperature: Double = 1.0,
+    val priority: Int = 1,
 ) {
     companion object {
         private val englishRoles = listOf(
@@ -16,6 +17,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы опытный разработчик на Kotlin. Предлагайте решения с использованием современных практик и методик разработки.",
                 keywords = setOf("kotlin", "ktor", "jvm"),
                 russianKeywords = setOf("котлин", "ктор", "джемвм"),
+                temperature = 0.3,
                 priority = 2
             ),
             RoleConfig(
@@ -24,6 +26,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы эксперт по Android. Предлагайте решения на Kotlin с использованием современных практик (Jetpack Compose, Coroutines, MVVM и т.д.).",
                 keywords = setOf("android", "kotlin", "jetpack", "compose", "room", "viewmodel"),
                 russianKeywords = setOf("андроид", "котлин", "джетпак", "композ", "рум", "вьюмодель"),
+                temperature = 0.3,
                 priority = 2
             ),
             RoleConfig(
@@ -32,6 +35,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы эксперт по iOS. Предлагайте решения на Swift с использованием современных практик (SwiftUI, Combine, MVVM, Core Data и т.д.).",
                 keywords = setOf("ios", "swift", "swiftui", "uikit", "core data", "combine"),
                 russianKeywords = setOf("айос", "свифт", "свифтуаи", "юикит", "кор дата", "комбайн"),
+                temperature = 0.3,
                 priority = 2
             ),
             RoleConfig(
@@ -40,6 +44,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы эксперт по кроссплатформенной мобильной разработке. Предлагайте решения на Flutter, React Native или KMM с учётом особенностей платформ.",
                 keywords = setOf("flutter", "react native", "kmm", "cross-platform", "dart", "js"),
                 russianKeywords = setOf("флаттер", "реакт натив", "кмм", "кроссплатформен", "дарт", "джаваскрипт"),
+                temperature = 0.3,
                 priority = 2
             ),
 
@@ -50,6 +55,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы эксперт по backend-разработке. Предлагайте решения для серверной части, API, баз данных и облачных сервисов.",
                 keywords = setOf("backend", "server", "api", "rest", "graphql", "database"),
                 russianKeywords = setOf("бэкенд", "сервер", "апи", "рест", "графкьюэл", "база данных"),
+                temperature = 0.3,
                 priority = 1
             ),
             RoleConfig(
@@ -58,6 +64,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы эксперт по frontend-разработке. Предлагайте решения с использованием современных JavaScript-фреймворков, CSS и оптимизации производительности.",
                 keywords = setOf("frontend", "javascript", "react", "vue", "angular", "css"),
                 russianKeywords = setOf("фронтенд", "джаваскрипт", "реакт", "вью", "ангуляр", "цсс"),
+                temperature = 0.3,
                 priority = 1
             ),
             RoleConfig(
@@ -66,14 +73,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы специалист по data science. Давайте решения с использованием pandas/NumPy и объясняйте модели.",
                 keywords = setOf("pandas", "numpy", "data science", "machine learning"),
                 russianKeywords = setOf("pandas", "numpy", "дата саенс", "машинное обучение"),
-                priority = 3
-            ),
-            RoleConfig(
-                roleName = "Health Tech Consultant",
-                systemMessage = "Expert in medical software, HIPAA compliance, and healthcare data systems. Discuss EHR integrations and medical device interoperability.",
-                russianSystemMessage = "Эксперт по медицинским IT-системам, ГОСТ Р 52636, интеграция ЕГИСЗ и медицинских устройств.",
-                keywords = setOf("healthcare", "EHR", "HIPAA", "medical", "HL7"),
-                russianKeywords = setOf("здоровье", "медицина", "ЕГИСЗ", "ГОСТ Р 52636"),
+                temperature = 0.3,
                 priority = 3
             ),
             RoleConfig(
@@ -82,6 +82,7 @@ data class RoleConfig(
                 russianSystemMessage = "Эксперт по ИБ: пентесты, ФСТЭК требованиям и защите персональных данных 152-ФЗ.",
                 keywords = setOf("cybersecurity", "NIST", "OWASP", "pentest", "firewall"),
                 russianKeywords = setOf("кибербезопасность", "ФСТЭК", "152-ФЗ", "пентест"),
+                temperature = 0.3,
                 priority = 3
             ),
             RoleConfig(
@@ -90,14 +91,16 @@ data class RoleConfig(
                 russianSystemMessage = "Специалист по технической документации ГОСТ 2.105-2019 и созданию руководств пользователя.",
                 keywords = setOf("documentation", "technical writing", "API docs", "knowledge base"),
                 russianKeywords = setOf("документация", "ГОСТ 2.105", "техписание"),
+                temperature = 0.7,
                 priority = 2
             ),
             RoleConfig(
                 roleName = "UX Architect",
                 systemMessage = "Design system specialist focused on WCAG compliance, user journey mapping, and interaction patterns.",
                 russianSystemMessage = "Эксперт по юзабилити и доступности интерфейсов ГОСТ Р 52872-2019.",
-                keywords = setOf("UX", "accessibility", "Figma", "user flow", "WCAG"),
+                keywords = setOf("UX", "accessibility", "interface", "Figma", "user flow", "WCAG"),
                 russianKeywords = setOf("UX", "интерфейс", "Figma", "ГОСТ Р 52872"),
+                temperature = 0.9,
                 priority = 2
             ),
             // Health & Wellness
@@ -107,6 +110,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы предоставляете общую информацию о здоровье, питании и первой помощи. Примечание: Не заменяет консультацию специалиста.",
                 keywords = setOf("sick", "health", "diet", "exercise", "vitamins", "headache", "allergy"),
                 russianKeywords = setOf("боль", "болезнь", "заболел", "здоровье", "диета", "упражнения", "витамины", "мигрень", "аллергия"),
+                temperature = 0.5,
                 priority = 3
             ),
             RoleConfig(
@@ -115,6 +119,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы предлагаете техники эмоциональной поддержки и управления стрессом. Примечание: Не заменяет терапию.",
                 keywords = setOf("stress", "anxiety", "meditation", "sleep", "mindfulness", "motivation"),
                 russianKeywords = setOf("стресс", "тревога", "медитация", "сон", "осознанность", "мотивация"),
+                temperature = 0.7,
                 priority = 3
             ),
 
@@ -125,6 +130,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы даёте советы по бюджету, сбережениям и базовым инвестиционным концепциям. Примечание: Не финансовый совет.",
                 keywords = setOf("budget", "savings", "investing", "tax", "debt", "retirement"),
                 russianKeywords = setOf("бюджет", "сбережения", "инвестиции", "налоги", "долги", "пенсия"),
+                temperature = 0.7,
                 priority = 2
             ),
 
@@ -135,6 +141,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы помогаете с методами обучения, подготовкой к экзаменам и академическим письмом.",
                 keywords = setOf("study", "exam", "essay", "homework", "research", "citation"),
                 russianKeywords = setOf("учеба", "экзамен", "эссе", "домашка", "исследование", "цитирование"),
+                temperature = 0.7,
                 priority = 2
             ),
 
@@ -145,6 +152,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы даёте советы по ремонту, организации пространства и простому ремонту.",
                 keywords = setOf("diy", "repair", "furniture", "cleaning", "gardening", "tools"),
                 russianKeywords = setOf("сделай сам", "ремонт", "мебель", "уборка", "сад", "инструменты"),
+                temperature = 0.9,
                 priority = 3
             ),
             RoleConfig(
@@ -152,7 +160,8 @@ data class RoleConfig(
                 systemMessage = "You provide recipes, cooking techniques, and meal planning suggestions.",
                 russianSystemMessage = "Вы предлагаете рецепты, кулинарные техники и идеи для планирования питания.",
                 keywords = setOf("recipe", "cook", "bake", "ingredients", "meal prep", "kitchen"),
-                russianKeywords = setOf("рецепт", "готовка", "выпечка", "ингредиенты", "план питания", "кухня"),
+                russianKeywords = setOf("рецепт", "готовка", "готовить", "выпечка", "ингредиенты", "план питания", "кухня"),
+                temperature = 0.5,
                 priority = 2
             ),
 
@@ -163,6 +172,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы даёте общие советы по тайм-менеджменту, принятию решений и саморазвитию.",
                 keywords = setOf("advice", "decide", "time management", "goal", "productivity", "habit"),
                 russianKeywords = setOf("совет", "решение", "тайм-менеджмент", "цель", "продуктивность", "привычка"),
+                temperature = 0.9,
                 priority = 3
             ),
             RoleConfig(roleName = "Travel Planner",
@@ -170,6 +180,7 @@ data class RoleConfig(
                 russianSystemMessage = "Вы предлагаете советы по путешествиям, культурные заметки и идеи маршрутов.",
                 keywords = setOf("travel", "hotel", "flight", "visa", "itinerary", "packing"),
                 russianKeywords = setOf("путешествие", "отель", "авиабилет", "виза", "маршрут", "сборы"),
+                temperature = 1.0,
                 priority = 2
             ),
         )
@@ -180,6 +191,7 @@ data class RoleConfig(
                 systemMessage = "You're an ERP implementation consultant specialized in 1C:Enterprise.",
                 russianSystemMessage = "Вы эксперт по 1C:Предприятие. Помогайте с конфигурацией, языком запросов и интеграциями.",
                 russianKeywords = setOf("1с", "предприятие", "erp", "конфигурация", "вп", "запросы 1с"),
+                temperature = 0.3,
                 priority = 3
             ),
             RoleConfig(
@@ -187,6 +199,7 @@ data class RoleConfig(
                 systemMessage = "You assist with Russian legal system automation (ГАС Правосудие, СудАкт).",
                 russianSystemMessage = "Вы помогаете автоматизировать юридические процессы (ГАС Правосудие, электронное правосудие).",
                 russianKeywords = setOf("гас правосудие", "судакт", "эцп", "суд", "юрист", "электронное правосудие"),
+                temperature = 0.5,
                 priority = 2
             ),
             RoleConfig(
@@ -194,6 +207,7 @@ data class RoleConfig(
                 systemMessage = "Expert in Russian government IT systems integration and regulatory compliance",
                 russianSystemMessage = "Специалист по российским государственным ИТ-системам (ГИС ЖКХ, ЕМИАС, ЕГИС Здрав.Омбудсмен).",
                 russianKeywords = setOf("госуслуги", "есн", "ГИС ЖКХ", "ЕМИАС"),
+                temperature = 0.3,
                 priority = 3
             ),
             RoleConfig(
@@ -201,6 +215,7 @@ data class RoleConfig(
                 russianSystemMessage = "Автоматизация юридических процессов по ГОСТ Р 58.0.01-2021 и работе с электронными доказательствами.",
                 systemMessage = "Legal tech expert for automated document processing and e-justice systems",
                 russianKeywords = setOf("эцп", "судэб", "электронный документооборот", "ГИС ГМП"),
+                temperature = 0.5,
                 priority = 2
             ),
         )
@@ -210,6 +225,7 @@ data class RoleConfig(
                 roleName = "Helpful Assistant",
                 systemMessage = "You are a helpful assistant.",
                 keywords = setOf("help", "how to", "question"),
+                temperature = 0.8,
                 priority = 0
             ),
         )
@@ -220,6 +236,7 @@ data class RoleConfig(
                 systemMessage = "You are a helpful assistant.",
                 russianSystemMessage = "Ты полезный помощник.",
                 russianKeywords = setOf("помощь", "вопрос", "как сделать"),
+                temperature = 0.8,
                 priority = 0
             ),
         )

@@ -14,10 +14,11 @@ sealed class Strings(
     data object StartMessage : Strings("Го", "Let's go")
     data object ThinkingMessage : Strings("Думаю...", "Thinking...")
     data object ThinkingCompletedMessage : Strings("Подумал, получается:", "Thought and it's:")
-    data object ResponseMessage : Strings("Так, ну смотри", "So, well, look")
-    data object RateLimitMessage : Strings("Превышен лимит запросов. Подожди пока", "Rate limit exceeded. Wait")
+    data object ProcessingMessage : Strings("⏳Обработка", "⏳Processing")
+    data object RateLimitMessage : Strings("Превышен лимит запросов. Подожди", "Rate limit exceeded. Wait")
     data object KeyboardStopText : Strings("🚫 Остановись", "🚫 Stop it")
     data object KeyboardClearHistoryText : Strings("🧹 Забудь все", "🧹 Forgot all")
+    data object KeyboardRegenerate : Strings("↻", "↻")
 
     data object CallbackStopSuccessAnswer : Strings("Остановился!", "Stopped!")
     data object CallbackStopNothingRunningAnswer : Strings("Нечего останавливать", "Nothing to stop")

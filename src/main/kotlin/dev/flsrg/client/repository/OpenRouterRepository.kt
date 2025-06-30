@@ -19,11 +19,16 @@ class OpenRouterRepository(private val api: Api): Repository {
     override fun <T> getCompletionsStream(
         config: ClientConfig,
         model: Model,
+        temperature: Double,
         chatMessages: List<String>,
         transform: (String) -> T,
     ): Flow<T> {
         return flow {
-            api.getCompletionsStream(model, chatMessages).collect { response ->
+            api.getCompletionsStream(
+                model = model,
+                temperature = temperature,
+                messagesJson = chatMessages
+            ).collect { response ->
                 log.info("Received API response (code={})", response.status.value)
 
                 val channel: ByteReadChannel = response.bodyAsChannel()

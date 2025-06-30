@@ -10,5 +10,5 @@ abstract class Api(
     protected val clientConfig: ClientConfig,
     val apiConfig: ApiConfig
 ) {
-    abstract fun getCompletionsStream(model: Model, messagesJson: List<String>): Flow<HttpResponse>
+    abstract fun getCompletionsStream(model: Model, temperature: Double, messagesJson: List<String>): Flow<HttpResponse>
 }
