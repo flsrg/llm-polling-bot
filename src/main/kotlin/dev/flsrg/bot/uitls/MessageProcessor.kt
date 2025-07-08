@@ -3,11 +3,8 @@ package dev.flsrg.bot.uitls
 import dev.flsrg.bot.BotConfig
 import dev.flsrg.bot.BotHandler
 import dev.flsrg.bot.roleplay.LanguageDetector
-import dev.flsrg.bot.uitls.BotUtils.botMessage
-import dev.flsrg.bot.uitls.BotUtils.editMessage
 import dev.flsrg.bot.uitls.BotUtils.withRetry
 import dev.flsrg.client.model.ChatResponse
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessages
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException
 
 class MessageProcessor(
@@ -52,11 +49,11 @@ class MessageProcessor(
         }
     }
 
-    suspend fun updateOrSend(vararg buttons: BotUtils.KeyboardButton, language: LanguageDetector.Language) {
+    suspend fun updateOrSend(buttons: List<BotUtils.KeyboardButton>, language: LanguageDetector.Language, isCompletion: Boolean) {
         when {
             contentBuffer.isNotEmpty() -> {
                 clearReasoning(language)
-                sendContent(buttons.toList())
+                sendContent(buttons.toList(), isCompletion = isCompletion)
             }
             reasoningBuffer.isNotEmpty() -> sendReasoning(buttons.toList())
         }
@@ -67,7 +64,10 @@ class MessageProcessor(
         if (reasoningMessageIds.isNotEmpty()) {
             deleteAllReasoningMessages()
             reasoningMessageIds.clear()
-            botHandler.onExecute(botMessage(chatId, Strings.ThinkingCompletedMessage.get(language)))
+            botHandler.sendMessage(
+                chatId = chatId,
+                message = Strings.ThinkingCompletedMessage.get(language),
+            )
         }
     }
 
@@ -95,12 +95,13 @@ class MessageProcessor(
         isNeedFormatting: Boolean = true,
         skipIfSendFailure: Boolean = false,
         isLastMessage: Boolean = false,
+        isCompletion: Boolean = false,
     ) {
-        try {
-            val contentMessage = contentBuffer.toString()
+        val (safeContentMessage, remaining) = splitAtLastMarkdownSymbol(contentBuffer)
 
+        try {
             contentMessageId = updateOrSendMessage(
-                message = contentMessage,
+                message = safeContentMessage,
                 existingMessageId = contentMessageId,
                 keyboardButtons = buttons,
                 parseMode = if (isNeedFormatting) botConfig.botMessageParseMode else null
@@ -111,14 +112,24 @@ class MessageProcessor(
                     messageSkippedTimes++
                     return
                 } else {
-                    sendContent(buttons, isNeedFormatting = false)
+                    sendContent(buttons, isNeedFormatting = false, isCompletion = isCompletion)
                 }
             }
         }
 
         if (isLastMessage) {
             contentBuffer.clear()
+            contentBuffer.append(remaining)
             contentMessageId = null
+        }
+
+        if (isCompletion && remaining.isNotEmpty()) {
+            updateOrSendMessage(
+                message = remaining,
+                existingMessageId = null,
+                keyboardButtons = buttons,
+                parseMode = null
+            )
         }
     }
 
@@ -137,18 +148,16 @@ class MessageProcessor(
 
         val messageId = withRetry(maxRetries = 5, initialDelay = 5000, origin = "execute updateOrSendMessage") {
             if (existingMessageId == null) {
-                val newMessage = botMessage(
+                return@withRetry botHandler.sendMessage(
                     chatId = chatId,
                     message = message,
                     buttons = keyboardButtons,
                     parseMode = parseMode,
                 )
 
-                return@withRetry botHandler.onExecute(newMessage).messageId
-
             } else {
                 if (message == prevMessage) return@withRetry existingMessageId
-                val editMessage = editMessage(
+                botHandler.editMessage(
                     chatId = chatId,
                     messageId = existingMessageId,
                     message = message,
@@ -156,7 +165,6 @@ class MessageProcessor(
                     parseMode = parseMode
                 )
 
-                botHandler.onExecute(editMessage)
                 return@withRetry existingMessageId
             }
         }
@@ -167,14 +175,53 @@ class MessageProcessor(
 
     private fun deleteAllReasoningMessages() {
         reasoningMessageIds.mapNotNull { it }.takeIf { it.isNotEmpty() }?.let { ids ->
-            botHandler.onExecute(
-                DeleteMessages.builder()
-                    .chatId(chatId)
-                    .messageIds(ids)
-                    .build()
+            botHandler.deleteMessages(
+                chatId = chatId,
+                messageIds = ids,
             )
         }
     }
 
     fun getFinalAssistantMessage(): String = finalAssistantMessage.toString()
+
+    private fun isEscaped(text: String, index: Int): Boolean {
+        if (index <= 0) return false
+        var count = 0
+        var i = index - 1
+        while (i >= 0 && text[i] == '\\') {
+            count++
+            i--
+        }
+        return count % 2 == 1
+    }
+
+    private fun splitAtLastMarkdownSymbol(stringBuilder: StringBuilder): SafeText {
+        val text = stringBuilder.toString()
+        if (text.isEmpty()) {
+            return SafeText("", "")
+        }
+
+        val markdownSymbols = listOf(
+            "```", "~~~", "~~", "**", "__", "![", "---", "***", "===",
+            "`", "*", "_"
+        ).sortedByDescending { it.length }
+
+        var i = text.length - 1
+        while (i >= 0) {
+            for (symbol in markdownSymbols) {
+                if (i + symbol.length <= text.length) {
+                    if (text.startsWith(symbol, i)) {
+                        if (!isEscaped(text, i)) {
+                            val safeEnd = i + symbol.length
+                            return SafeText(text.substring(0, safeEnd), text.substring(safeEnd))
+                        }
+                    }
+                }
+            }
+            i--
+        }
+        return SafeText(text, "")
+    }
+
+    internal data class SafeText(val safeText: String, val remaining: String)
 }

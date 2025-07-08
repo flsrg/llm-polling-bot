@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.meta.api.methods.ActionType
 import org.telegram.telegrambots.meta.api.methods.send.SendChatAction
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessages
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -18,7 +19,8 @@ object BotUtils {
     private val log = LoggerFactory.getLogger(javaClass)
 
     fun editMessage(
-        chatId: String, messageId: Int,
+        chatId: String,
+        messageId: Int,
         message: String,
         buttons: List<KeyboardButton>? = null,
         parseMode: String? = null,
@@ -43,6 +45,16 @@ object BotUtils {
             .text(message)
             .parseMode(parseMode)
             .replyMarkup(buttons?.let { createInlineKeyboardMarkup(it) })
+            .build()
+    }
+
+    fun deleteMessages(
+        chatId: String,
+        messageIds: List<Int>,
+    ): DeleteMessages {
+        return DeleteMessages.builder()
+            .chatId(chatId)
+            .messageIds(messageIds)
             .build()
     }
 
@@ -132,7 +144,7 @@ object BotUtils {
     class NewMessageStopException: CancellationException("New message in chat")
 
     fun LlmPollingBot.sendTypingAction(chatId: String) {
-        onExecute(
+        execute(
             SendChatAction.builder()
                 .chatId(chatId)
                 .action(ActionType.TYPING.name)
