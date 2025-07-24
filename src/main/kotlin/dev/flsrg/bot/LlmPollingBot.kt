@@ -7,14 +7,17 @@ import dev.flsrg.bot.repo.SQLUsersRepository
 import dev.flsrg.bot.roleplay.LanguageDetector
 import dev.flsrg.bot.roleplay.LanguageDetector.Language.RU
 import dev.flsrg.bot.uitls.*
+import dev.flsrg.bot.uitls.BotUtils.botMessage
 import dev.flsrg.bot.uitls.BotUtils.sendTypingAction
 import dev.flsrg.bot.uitls.BotUtils.withRetry
 import kotlinx.coroutines.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.telegram.telegrambots.bots.TelegramLongPollingBot
+import org.telegram.telegrambots.meta.api.methods.BotApiMethod
 import org.telegram.telegrambots.meta.api.objects.Message
 import org.telegram.telegrambots.meta.api.objects.Update
+import java.io.Serializable
 import java.util.concurrent.ConcurrentHashMap
 
 open class LlmPollingBot(
@@ -59,13 +62,15 @@ open class LlmPollingBot(
 
     override fun getBotUsername() = botUsername
 
+    override fun <T : Serializable?, Method : BotApiMethod<T>?> onExecute(method: Method): T = execute(method)
+
     override fun onUpdateReceived(update: Update) {
         rootScope.launch(Dispatchers.IO) {
             if (update.hasMessage() && update.message.hasText()) {
                 val chatId = update.message.chat.id.toString()
                 when {
                     adminHelper.isAdminCommand(update) -> adminHelper.handleAdminCommand(update)
-                    isStartMessage(update) -> execute(BotUtils.botMessage(chatId, Strings.StartMessage.get(lastUsedLanguage[chatId] ?: RU)))
+                    isStartMessage(update) -> execute(botMessage(chatId, Strings.StartMessage.get(lastUsedLanguage[chatId] ?: RU)))
                     else -> handleMessage(update)
                 }
 
@@ -90,7 +95,7 @@ open class LlmPollingBot(
         lastUsedLanguage[chatId] = lang
 
         if (startMillis - rateLimits.getOrDefault(chatId, 0) < botConfig.messageRateLimit) {
-            execute(BotUtils.botMessage(chatId, Strings.RateLimitMessage.get(lang)))
+            execute(botMessage(chatId, Strings.RateLimitMessage.get(lang)))
             return
         }
         rateLimits[chatId] = startMillis
@@ -112,7 +117,7 @@ open class LlmPollingBot(
                 }
             } catch (e: Exception) {
                 val errorMessage = BotUtils.errorToMessage(e, lang)
-                execute(BotUtils.botMessage(chatId, errorMessage))
+                onExecute(botMessage(chatId, errorMessage))
 
                 log.error("Error processing message", e)
 
@@ -135,33 +140,4 @@ open class LlmPollingBot(
     }
 
     private fun isStartMessage(update: Update): Boolean = update.message.text == START_DEFAULT_COMMAND
-
-    override fun sendMessage(
-        chatId: String,
-        message: String,
-        buttons: List<BotUtils.KeyboardButton>?,
-        parseMode: String?
-    ): Int {
-        return execute(
-            BotUtils.botMessage(chatId, message, buttons, parseMode)
-        ).messageId
-    }
-
-    override fun editMessage(
-        chatId: String,
-        messageId: Int,
-        message: String,
-        buttons: List<BotUtils.KeyboardButton>?,
-        parseMode: String?
-    ) {
-        execute(
-            BotUtils.editMessage(chatId, messageId, message, buttons, parseMode)
-        )
-    }
-
-    override fun deleteMessages(chatId: String, messageIds: List<Int>) {
-        execute(
-            BotUtils.deleteMessages(chatId, messageIds)
-        )
-    }
 }

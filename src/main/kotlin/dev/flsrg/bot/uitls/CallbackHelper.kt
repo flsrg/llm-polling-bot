@@ -41,14 +41,14 @@ class CallbackHelper(private val llmPollingBot: LlmPollingBot) {
             if (job != null) {
                 job.cancel(BotUtils.UserStoppedException())
 
-                execute(
+                onExecute(
                     AnswerCallbackQuery.builder()
                         .callbackQueryId(callbackId)
                         .text(Strings.CallbackStopSuccessAnswer.get(language))
                         .build()
                 )
             } else {
-                execute(
+                onExecute(
                     AnswerCallbackQuery.builder()
                         .callbackQueryId(callbackId)
                         .text(Strings.CallbackStopNothingRunningAnswer.get(language))
@@ -65,7 +65,7 @@ class CallbackHelper(private val llmPollingBot: LlmPollingBot) {
         historyManager.clearHistory(userId)
 
         // Send confirmation to the user
-        execute(
+        onExecute(
             AnswerCallbackQuery.builder()
                 .callbackQueryId(callbackId)
                 .text(Strings.CallbackClearHistorySuccessAnswer.get(language))
@@ -74,7 +74,7 @@ class CallbackHelper(private val llmPollingBot: LlmPollingBot) {
 
         // Optionally, send a message to the chat confirming the history is cleared
         try {
-            execute(
+            onExecute(
                 SendMessage.builder()
                     .chatId(chatId)
                     .text(Strings.CallbackClearHistorySuccessMessage.get(language))

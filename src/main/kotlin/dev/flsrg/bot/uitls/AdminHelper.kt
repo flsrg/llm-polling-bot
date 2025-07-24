@@ -1,14 +1,15 @@
 package dev.flsrg.bot.uitls
 
-import dev.flsrg.bot.BotHandler
+import dev.flsrg.bot.LlmPollingBot
 import dev.flsrg.bot.repo.UserRepository
+import dev.flsrg.bot.uitls.BotUtils.botMessage
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.objects.Update
 import java.util.*
 
 class AdminHelper(
-    private val botHandler: BotHandler,
+    private val bot: LlmPollingBot,
     private val adminUserId: Long,
     private val userRepository: UserRepository,
 ) {
@@ -32,7 +33,7 @@ class AdminHelper(
         userRepository.recordMessage(userId, userName)
     }
 
-    private fun sendStatistics(adminChatId: String) {
+    private fun sendStatistics(adminChatId: String) = bot.apply {
         try {
             val stats = """
                 📊 *Bot Statistics Report*
@@ -44,16 +45,20 @@ class AdminHelper(
                 👤 *Most Active User:* ${getMostActiveUser()}
             """.trimIndent()
 
-            botHandler.sendMessage(
-                chatId = adminChatId,
-                message = stats,
-                parseMode = ParseMode.MARKDOWN,
-                buttons = listOf(UsersListKeyboardButton())
+            onExecute(
+                botMessage(
+                    chatId = adminChatId,
+                    message = stats,
+                    parseMode = ParseMode.MARKDOWN,
+                    buttons = listOf(UsersListKeyboardButton())
+                )
             )
         } catch (e: Exception) {
-            botHandler.sendMessage(
-                chatId = adminChatId,
-                message = "❌ Error generating statistics: ${e.message}"
+            onExecute(
+                botMessage(
+                    chatId = adminChatId,
+                    message = "❌ Error generating statistics: ${e.message}"
+                )
             )
             throw e
         }
@@ -89,7 +94,7 @@ class AdminHelper(
         }
     }
 
-    private fun sendUsersList(chatId: String, callbackId: String) {
+    private fun sendUsersList(chatId: String, callbackId: String) = bot.apply {
         val users = userRepository.getUsers().joinToString("\n") {
             """
                 👤 *User ${it.username}*
@@ -102,17 +107,19 @@ class AdminHelper(
             """.trimIndent()
         }
 
-        botHandler.execute(
+        onExecute(
             AnswerCallbackQuery.builder()
                 .callbackQueryId(callbackId)
                 .text("Ok")
                 .build()
         )
 
-        botHandler.sendMessage(
-            chatId = chatId,
-            message = users,
-            parseMode = ParseMode.MARKDOWN,
+        onExecute(
+            botMessage(
+                chatId = chatId,
+                message = users,
+                parseMode = ParseMode.MARKDOWN,
+            )
         )
     }
 }
